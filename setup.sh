@@ -20,14 +20,42 @@ ensure_rust() {
 install_tree_sitter() {
   if command -v tree-sitter >/dev/null 2>&1; then
     echo "tree-sitter-cli already installed; skipping"
-  else
-    # The pre-installed cargo may use a root-owned CARGO_HOME (e.g.
-    # /usr/local/cargo in the Ona dev container). Installing there as a
-    # non-root user fails with "Permission denied" when cargo tries to write
-    # its registry cache. Override CARGO_HOME and the install root to
-    # user-owned locations, and ensure the binary lands on PATH.
-    CARGO_HOME="$HOME/.cargo" cargo install tree-sitter-cli --root "$HOME/.local"
+    return
   fi
+
+  # Prefer the official prebuilt binary over `cargo install`. The crate now
+  # pulls in rquickjs-sys, whose build script compiles a QuickJS C engine from
+  # source and needs a full C toolchain — slow and fragile in minimal
+  # containers. The prebuilt binary sidesteps all of that.
+  local os arch
+  case "$(uname -s)" in
+    Darwin) os="macos" ;;
+    Linux) os="linux" ;;
+    *) os="" ;;
+  esac
+  case "$(uname -m)" in
+    x86_64 | amd64) arch="x64" ;;
+    arm64 | aarch64) arch="arm64" ;;
+    *) arch="" ;;
+  esac
+
+  if [ -n "$os" ] && [ -n "$arch" ]; then
+    local asset="tree-sitter-${os}-${arch}.gz"
+    local url="https://github.com/tree-sitter/tree-sitter/releases/latest/download/${asset}"
+    echo "Downloading prebuilt tree-sitter ($asset)..."
+    mkdir -p "$HOME/.local/bin"
+    if curl -fsSL "$url" | gunzip >"$HOME/.local/bin/tree-sitter"; then
+      chmod +x "$HOME/.local/bin/tree-sitter"
+      return
+    fi
+    echo "Prebuilt download failed; falling back to 'cargo install'"
+  fi
+
+  # Fallback: build from source. The pre-installed cargo may use a root-owned
+  # CARGO_HOME (e.g. /usr/local/cargo in the Ona dev container), so override it
+  # and the install root to user-owned locations. Needs a C toolchain
+  # (build-essential), installed above on Ubuntu.
+  CARGO_HOME="$HOME/.cargo" cargo install tree-sitter-cli --root "$HOME/.local"
 }
 
 detect_os() {
@@ -50,7 +78,7 @@ install_dependencies() {
   ubuntu)
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get update
-    sudo apt-get install -y stow zsh neovim
+    sudo apt-get install -y stow zsh neovim build-essential
     curl https://mise.run | sh
     ensure_rust
     install_tree_sitter
