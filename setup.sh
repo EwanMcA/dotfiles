@@ -58,6 +58,20 @@ install_tree_sitter() {
   CARGO_HOME="$HOME/.cargo" cargo install tree-sitter-cli --root "$HOME/.local"
 }
 
+install_neovim() {
+  # apt ships Neovim 0.9.x, but the config needs >= 0.12 (vim.pack / the
+  # PackChanged autocommand). Pull the official prebuilt tarball into ~/.local.
+  local arch
+  case "$(uname -m)" in
+    arm64 | aarch64) arch="arm64" ;;
+    *) arch="x86_64" ;;
+  esac
+  echo "Installing latest stable Neovim (apt's is too old)..."
+  mkdir -p "$HOME/.local/bin"
+  curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${arch}.tar.gz" | tar xz -C "$HOME/.local"
+  ln -sf "$HOME/.local/nvim-linux-${arch}/bin/nvim" "$HOME/.local/bin/nvim"
+}
+
 detect_os() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "mac"
@@ -78,8 +92,9 @@ install_dependencies() {
   ubuntu)
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get update
-    sudo apt-get install -y stow zsh neovim build-essential
+    sudo apt-get install -y stow zsh build-essential
     curl https://mise.run | sh
+    install_neovim
     ensure_rust
     install_tree_sitter
     ;;
