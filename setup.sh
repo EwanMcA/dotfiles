@@ -14,12 +14,19 @@ install_dependencies() {
   local os=$(detect_os)
   case $os in
   mac)
-    brew install mise stow zsh neovim
+    brew install mise stow zsh neovim ripgrep fd
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+    source "$HOME/.cargo/env"
+    cargo install tree-sitter-cli
     ;;
   ubuntu)
-    sudo apt update
-    sudo apt install -y stow zsh neovim
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get update
+    sudo apt-get install -y stow zsh neovim
     curl https://mise.run | sh
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+    source "$HOME/.cargo/env"
+    cargo install tree-sitter-cli
     ;;
   *)
     echo "Unsupported OS"
@@ -51,7 +58,9 @@ install_oh_my_zsh() {
   fi
 }
 configure_zsh() {
-  sudo chsh -s $(which zsh) $(whoami)
+  if ! sudo chsh -s "$(which zsh)" "$(whoami)"; then
+    echo "Could not change default shell to zsh; skipping (continue setup)"
+  fi
 }
 install_tools() {
   mise trust
