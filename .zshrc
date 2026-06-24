@@ -159,4 +159,4 @@ standup() {
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Created by `pipx` on 2025-07-31 08:31:44
-export PATH="$PATH:/home/emcandrew/.local/bin"
+export PATH="$PATH:$HOME/.local/bin"

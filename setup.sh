@@ -21,7 +21,12 @@ install_tree_sitter() {
   if command -v tree-sitter >/dev/null 2>&1; then
     echo "tree-sitter-cli already installed; skipping"
   else
-    cargo install tree-sitter-cli
+    # The pre-installed cargo may use a root-owned CARGO_HOME (e.g.
+    # /usr/local/cargo in the Ona dev container). Installing there as a
+    # non-root user fails with "Permission denied" when cargo tries to write
+    # its registry cache. Override CARGO_HOME and the install root to
+    # user-owned locations, and ensure the binary lands on PATH.
+    CARGO_HOME="$HOME/.cargo" cargo install tree-sitter-cli --root "$HOME/.local"
   fi
 }
 
