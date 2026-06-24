@@ -1,4 +1,4 @@
-vim.keymap.set("n", "<leader>ev", ":e ~/.config/nvim/init.vim<CR>")
+vim.keymap.set("n", "<leader>ev", ":e ~/.config/nvim/init.lua<CR>")
 vim.keymap.set("n", "<leader>cs", ":e ~/.config/nvim/README.md<CR>")
 vim.keymap.set("n", "<leader>sv", ":source ~/.config/nvim/init.vim<CR>")
 
