@@ -1,6 +1,30 @@
 #!/bin/bash
 set -e
 
+ensure_rust() {
+  # If cargo is already available (e.g. pre-installed in a dev container like
+  # Ona, where Rust lives in /usr/local/cargo owned by root), don't try to run
+  # rustup — it will fail with "cannot install while Rust is installed" and a
+  # permission error trying to overwrite the existing binary.
+  if command -v cargo >/dev/null 2>&1; then
+    echo "cargo already installed ($(command -v cargo)); skipping rustup"
+  elif [ -f "$HOME/.cargo/env" ]; then
+    echo "Found existing rustup install; sourcing it"
+    source "$HOME/.cargo/env"
+  else
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+    source "$HOME/.cargo/env"
+  fi
+}
+
+install_tree_sitter() {
+  if command -v tree-sitter >/dev/null 2>&1; then
+    echo "tree-sitter-cli already installed; skipping"
+  else
+    cargo install tree-sitter-cli
+  fi
+}
+
 detect_os() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "mac"
@@ -15,18 +39,16 @@ install_dependencies() {
   case $os in
   mac)
     brew install mise stow zsh neovim ripgrep fd
-    curl https://sh.rustup.rs -sSf | sh -s -- -y
-    source "$HOME/.cargo/env"
-    cargo install tree-sitter-cli
+    ensure_rust
+    install_tree_sitter
     ;;
   ubuntu)
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get update
     sudo apt-get install -y stow zsh neovim
     curl https://mise.run | sh
-    curl https://sh.rustup.rs -sSf | sh -s -- -y
-    source "$HOME/.cargo/env"
-    cargo install tree-sitter-cli
+    ensure_rust
+    install_tree_sitter
     ;;
   *)
     echo "Unsupported OS"
