@@ -115,8 +115,10 @@ alias ag='ag -W 150'
 
 alias vimgit='nvim `git status --porcelain | sed -ne "s/^ M //p"`'
 alias v='nvim -S'
-alias vf='fzf -m --print0 | xargs -0 -o nvim'
+alias vf='rg --files --hidden --glob "!.git" --glob "!node_modules" | fzf -m --print0 | xargs -0 -o nvim'
 alias cht='f() { curl cht.sh/$1 };f'
+alias dot='cd ~/dotfiles'
+alias ws='cd /workspaces/obsidian/'
 
 # misc
 # pulling file off k8s

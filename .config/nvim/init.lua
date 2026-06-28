@@ -509,11 +509,57 @@ do
 
   -- See `:help telescope` and `:help telescope.setup()`
   local actions = require("telescope.actions")
+
+  -- Width-aware path shortener: always keep the first two directories and the
+  -- filename, but fill the remaining width with as many of the in-between
+  -- directories (those closest to the file) as fit, collapsing the rest to "…".
+  --   short paths:  lua/custom/keymaps.lua            (untouched, it fits)
+  --   long  paths:  lua/custom/…/plugins/lsp/init.lua (middle trimmed to fit)
+  local function shorten_path(opts, path)
+    -- Mirror telescope's own results-window width calc (see utils.lua).
+    if opts.__shorten_width == nil then
+      local ok, state = pcall(require, "telescope.state")
+      local status = ok and state.get_status(vim.api.nvim_get_current_buf())
+      opts.__shorten_width = (status and status.layout)
+          and vim.api.nvim_win_get_width(status.layout.results.winid)
+            - #status.picker.selection_caret - 2
+        or false
+    end
+
+    local width = opts.__shorten_width
+    if not width or #path <= width then
+      return path -- width unknown, or it already fits: show everything
+    end
+
+    local parts = vim.split(path, "/", { trimempty = true })
+    if #parts <= 3 then
+      return path -- nothing to collapse (e.g. dir1/dir2/file)
+    end
+
+    local head, tail = parts[1] .. "/" .. parts[2], parts[#parts]
+    local function build(mid)
+      return table.concat(vim.list_extend({ head, "…" }, mid), "/") .. "/" .. tail
+    end
+
+    -- Greedily keep middle dirs nearest the filename while we stay within width.
+    local kept = {}
+    for i = #parts - 1, 3, -1 do
+      table.insert(kept, 1, parts[i])
+      if #build(kept) > width then
+        table.remove(kept, 1)
+        break
+      end
+    end
+    return build(kept)
+  end
+
   require("telescope").setup({
     -- You can put your default mappings / updates / etc. in here
     --  All the info you're looking for is in `:help telescope.setup()`
     --
      defaults = {
+       -- Keep first two dirs + filename, fitting as much of the middle as width allows
+       path_display = shorten_path,
        mappings = {
          i = { ['<Esc>'] = actions.close }
        },
@@ -559,6 +605,10 @@ do
       -- This is where a variable was first declared, or where a function is defined, etc.
       -- To jump back, press <C-t>.
       vim.keymap.set("n", "grd", builtin.lsp_definitions, { buffer = buf, desc = "[G]oto [D]efinition" })
+
+      -- Quicker, single-shot Goto Definition that overrides the built-in `gd`.
+      -- Buffer-local, so files without an LSP keep Vim's native `gd` behavior.
+      vim.keymap.set("n", "gd", builtin.lsp_definitions, { buffer = buf, desc = "[G]oto [D]efinition" })
 
       -- Fuzzy find all the symbols in your current document.
       -- Symbols are things like variables, functions, types, etc.
@@ -728,7 +778,7 @@ do
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
 
     stylua = {}, -- Used to format Lua code
 
@@ -1014,7 +1064,7 @@ do
   -- require 'kickstart.plugins.lint'
   -- require 'kickstart.plugins.autopairs'
   -- require 'kickstart.plugins.neo-tree'
-  -- require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
+  require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
 
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
