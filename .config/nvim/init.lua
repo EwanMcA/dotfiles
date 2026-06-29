@@ -149,6 +149,8 @@ do
   vim.o.splitright = true
   vim.o.splitbelow = true
 
+  vim.o.swapfile = false
+
   -- Sets how neovim will display certain whitespace characters in the editor.
   --  See `:help 'list'`
   --  and `:help 'listchars'`
@@ -564,7 +566,13 @@ do
          i = { ['<Esc>'] = actions.close }
        },
       },
-    -- pickers = {}
+    pickers = {
+      buffers = {
+        sort_mru = true,        -- most-recently-used first
+        sort_lastused = true,   -- last/alternate buffer at the very top
+        ignore_current_buffer = true,
+      },
+    },
     extensions = {
       ["ui-select"] = { require("telescope.themes").get_dropdown() },
     },

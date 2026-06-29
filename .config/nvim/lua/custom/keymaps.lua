@@ -20,8 +20,9 @@ vim.keymap.set("n", "<leader>s", "<cmd>lua vim.lsp.buf.format({})<CR>")
 -- search
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
-vim.keymap.set("n", "<leader><c-f>", "<cmd>Ag<CR>")
-vim.cmd 'nnoremap <c-f> :Ag <C-R><C-W><CR>'
+local search_builtin = require 'telescope.builtin'
+vim.keymap.set("n", "<c-f>", search_builtin.live_grep, { desc = "[S]earch by [G]rep (codebase)" })
+vim.keymap.set("n", "<leader><c-f>", search_builtin.grep_string, { desc = "[S]earch current [W]ord (codebase)" })
 
 
 -- Copy
@@ -61,11 +62,11 @@ vim.keymap.set("n", "<leader>9", ":b9<CR>")
 -- searching
 local builtin = require 'telescope.builtin'
 vim.keymap.set('n', '<leader>l', builtin.buffers, { desc = '[ ] Find existing buffers' })
-vim.keymap.set("n", "<c-p>", "<cmd>GFiles<CR>")
-vim.keymap.set("n", "<leader>p", "<cmd>FZF<CR>")
+vim.keymap.set('n', '<c-p>', builtin.git_files, { desc = 'Search [G]it files' })
+vim.keymap.set('n', '<leader>p', builtin.find_files, { desc = 'Search [F]iles' })
 
 -- Git
-vim.api.nvim_create_user_command( "GB", "Git blame", {})
+-- NOTE: line blame is gitsigns <leader>hb; toggle inline blame is <leader>tb
 vim.keymap.set("n", "<leader><leader>g", "<cmd>GBrowse<CR>")
 
 -- Terminal
