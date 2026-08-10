@@ -21,8 +21,8 @@ vim.keymap.set("n", "<leader>s", "<cmd>lua vim.lsp.buf.format({})<CR>")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 local search_builtin = require 'telescope.builtin'
-vim.keymap.set("n", "<c-f>", search_builtin.live_grep, { desc = "[S]earch by [G]rep (codebase)" })
-vim.keymap.set("n", "<leader><c-f>", search_builtin.grep_string, { desc = "[S]earch current [W]ord (codebase)" })
+vim.keymap.set("n", "<c-f>", search_builtin.grep_string, { desc = "[S]earch current [W]ord (codebase)"  })
+vim.keymap.set("n", "<leader><c-f>", search_builtin.live_grep, { desc = "[S]earch by [G]rep (codebase)" })
 
 
 -- Copy
@@ -65,6 +65,67 @@ vim.keymap.set('n', '<leader>l', builtin.buffers, { desc = '[ ] Find existing bu
 vim.keymap.set('n', '<c-p>', builtin.git_files, { desc = 'Search [G]it files' })
 vim.keymap.set('n', '<leader>p', builtin.find_files, { desc = 'Search [F]iles' })
 
+-- package-scoped search: searches the whole repo, but floats matches from the
+-- current file's package (nearest package.json above it) to the top and
+-- down-sorts everything else
+local sorters = require("telescope.sorters")
+local BIG = 2 ^ 20 -- penalty large enough to dominate any fuzzy score
+
+local function package_root()
+  local start = vim.fn.expand("%:p:h")
+  if start == "" then start = vim.fn.getcwd() end
+  -- nearest package.json walking upward from the current file
+  local found = vim.fs.find({ "package.json" }, { path = start, upward = true })[1]
+  if found then return vim.fs.dirname(found) end
+  return vim.fs.root(0, ".git") or vim.fn.getcwd()
+end
+
+-- wrap a base sorter so entries whose path starts with `prefix` keep their
+-- score, and everything else gets pushed below by BIG (fuzzy order preserved
+-- within each group)
+local function package_first(base, prefix)
+  local orig = base.scoring_function
+  base.scoring_function = function(self, prompt, line, entry)
+    local score = orig(self, prompt, line, entry)
+    if score == -1 then return -1 end
+    local path = (entry and (entry.filename or entry.value)) or line
+    if prefix and path and vim.startswith(path, prefix) then
+      return score
+    end
+    return score + BIG
+  end
+  return base
+end
+
+local function pkg_scoped(kind)
+  local root = vim.fs.root(0, ".git") or vim.fn.getcwd()
+  local rel = vim.fs.relpath(root, package_root()) or ""
+  local prefix = (rel ~= "" and rel ~= ".") and (rel .. "/") or nil
+  if kind == "find" then
+    search_builtin.find_files({
+      cwd = root,
+      sorter = package_first(sorters.get_fuzzy_file(), prefix),
+    })
+  elseif kind == "grep" then
+    search_builtin.live_grep({
+      cwd = root,
+      sorter = package_first(sorters.highlighter_only({}), prefix),
+    })
+  else
+    search_builtin.grep_string({
+      cwd = root,
+      sorter = package_first(sorters.get_fuzzy_file(), prefix),
+    })
+  end
+end
+
+vim.keymap.set("n", "<leader>P", function() pkg_scoped("find") end,
+  { desc = "Find files (package-first)" })
+vim.keymap.set("n", "<leader><leader>f", function() pkg_scoped("grep") end,
+  { desc = "Live grep (package-first)" })
+vim.keymap.set("n", "<leader><leader>w", function() pkg_scoped("word") end,
+  { desc = "Search word (package-first)" })
+
 -- Git
 -- NOTE: line blame is gitsigns <leader>hb; toggle inline blame is <leader>tb
 vim.keymap.set("n", "<leader><leader>g", "<cmd>GBrowse<CR>")
@@ -101,8 +162,26 @@ local function runOnCurrentFile(util)
   vim.api.nvim_command(cmd)
   vim.api.nvim_command("Topen")
 end
-vim.keymap.set("n", "<F2>", function() runOnCurrentFile("pytest -vv") end)
 vim.keymap.set("n", "<leader><F2>", function() runOnCurrentFile("black") end)
+
+-- run the unit-test command against the current file in a terminal split
+-- change UNIT_TEST_CMD to swap out the test runner
+local UNIT_TEST_CMD = "just unit-test"
+local unit_test_buf = nil
+local function runUnitTest()
+  local root = vim.fs.root(0, ".git") or vim.fn.getcwd()
+  local abs = vim.fn.expand("%:p")
+  local rel = vim.fs.relpath(root, abs) or abs
+  -- wipe the previous test terminal so buffers don't pile up
+  if unit_test_buf and vim.api.nvim_buf_is_valid(unit_test_buf) then
+    vim.api.nvim_buf_delete(unit_test_buf, { force = true })
+  end
+  -- run from the project root so the relative path resolves
+  vim.cmd("botright vsplit | terminal cd " .. vim.fn.shellescape(root)
+    .. " && " .. UNIT_TEST_CMD .. " " .. vim.fn.shellescape(rel))
+  unit_test_buf = vim.api.nvim_get_current_buf()
+end
+vim.keymap.set("n", "<F2>", runUnitTest, { desc = "unit-test current file" })
 
 vim.api.nvim_create_user_command("Pdb", function()
     local input = 'import pdb; pdb.set_trace()'

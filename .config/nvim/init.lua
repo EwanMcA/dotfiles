@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ","
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -110,7 +110,7 @@ do
   vim.o.number = true
   -- You can also add relative line numbers, to help with jumping.
   --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  vim.o.relativenumber = true
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = "a"
@@ -461,6 +461,24 @@ do
   ---@diagnostic disable-next-line: duplicate-set-field
   statusline.section_location = function()
     return "%2l:%-2v"
+  end
+
+  -- Drop the file info section (filetype, encoding, format, size) from the
+  -- statusline. Return "" to hide it entirely.
+  ---@diagnostic disable-next-line: duplicate-set-field
+  statusline.section_fileinfo = function()
+    return ""
+  end
+
+  -- Hide the diagnostics and LSP-servers sections from the statusline.
+  -- Return "" to remove; delete these overrides to bring them back.
+  ---@diagnostic disable-next-line: duplicate-set-field
+  statusline.section_diagnostics = function()
+    return ""
+  end
+  ---@diagnostic disable-next-line: duplicate-set-field
+  statusline.section_lsp = function()
+    return ""
   end
 
   -- ... and there is more!
@@ -944,7 +962,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = "default",
+      preset = "enter",
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1077,7 +1095,7 @@ do
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- require 'custom.plugins'
+  require 'custom.plugins'
   require("custom.keymaps")
 end
 
