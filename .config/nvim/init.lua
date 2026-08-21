@@ -481,6 +481,27 @@ do
     return ""
   end
 
+  -- mini.statusline leaves `MiniStatuslineFilename` linked to `StatusLineNC`,
+  -- which most dark colorschemes render as a dim grey that is hard to read on a
+  -- dark terminal. Use the normal text colour instead, keeping whatever
+  -- background the statusline already has.
+  local function brighten_statusline_filename()
+    local normal = vim.api.nvim_get_hl(0, { name = "Normal", link = false })
+    local filename = vim.api.nvim_get_hl(0, { name = "MiniStatuslineFilename", link = false })
+    vim.api.nvim_set_hl(0, "MiniStatuslineFilename", {
+      fg = normal.fg,
+      bg = filename.bg,
+      bold = true,
+    })
+  end
+
+  brighten_statusline_filename()
+  vim.api.nvim_create_autocmd("ColorScheme", {
+    desc = "Keep the statusline filename readable after a colorscheme change",
+    group = vim.api.nvim_create_augroup("custom-statusline-filename", { clear = true }),
+    callback = brighten_statusline_filename,
+  })
+
   -- ... and there is more!
   --  Check out: https://github.com/nvim-mini/mini.nvim
 end
