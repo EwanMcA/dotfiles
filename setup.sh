@@ -109,6 +109,15 @@ stow_dotfiles() {
     echo "Found existing .zshrc, backing up to .zshrc-bak"
     mv "$HOME/.zshrc" "$HOME/.zshrc-bak"
   fi
+  # Create ~/.claude as a real dir first. Otherwise stow symlinks the whole
+  # dir into this repo, and Claude's credentials/history would land here.
+  mkdir -p "$HOME/.claude"
+  # Back up any existing CLAUDE.md that isn't already our symlink, since a
+  # real file there makes stow fail with a conflict.
+  if [ -f "$HOME/.claude/CLAUDE.md" ] && [ ! -L "$HOME/.claude/CLAUDE.md" ]; then
+    echo "Found existing ~/.claude/CLAUDE.md, backing up to CLAUDE.md-bak"
+    mv "$HOME/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md-bak"
+  fi
   stow --target="$HOME" \
     --ignore='.git' \
     --ignore='.gitmodules' \
