@@ -1,0 +1,21 @@
+.claude/CLAUDE.md
+  s_7ad3e9faf14459::t_222dd14d62585d 1-7
+setup.sh
+  s_7ad3e9faf14459::t_6cb0f2864d3313 112-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "6ee0be9094fa8588c6691279af5d3216b1dbc91c",
+  "prompts": {},
+  "sessions": {
+    "s_7ad3e9faf14459": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62055f7-9a15-40b8-953a-0fe8d3ffc3f4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ewan McAndrew <ewan.c.mcandrew@gmail.com>"
+    }
+  }
+}
