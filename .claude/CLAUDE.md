@@ -11,3 +11,5 @@
 # Development notes
 
 https://claude.ai/artifact/LoRYpMJvrTLYSXG8AFnGAp
+
+I'll refer to that doc as my "dev notes"
