@@ -1,0 +1,19 @@
+.tmux.conf
+  s_4d0d1670c06407::t_268c84dec87909 52-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "c9b38ec63cea5d8cdd01e8fbc64030e23898f5dd",
+  "prompts": {},
+  "sessions": {
+    "s_4d0d1670c06407": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a96b403d-88ea-4d81-8e5c-416b6c6b0ada",
+        "model": "unknown"
+      },
+      "human_author": "Ewan McAndrew <ewan.c.mcandrew@gmail.com>"
+    }
+  }
+}
