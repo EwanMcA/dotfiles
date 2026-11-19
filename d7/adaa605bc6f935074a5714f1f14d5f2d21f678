@@ -1,0 +1,19 @@
+.claude/skills/review-tests/SKILL.md
+  s_59a4addd68db4a::t_a030208ea2c0ec 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "d7adaa605bc6f935074a5714f1f14d5f2d21f678",
+  "prompts": {},
+  "sessions": {
+    "s_59a4addd68db4a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b242519a-4488-4759-a8c2-06fc06f1a724",
+        "model": "unknown"
+      },
+      "human_author": "Ewan McAndrew <ewan.c.mcandrew@gmail.com>"
+    }
+  }
+}
